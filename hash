@@ -1,0 +1,72 @@
+%sql
+-- Create and use the database
+CREATE DATABASE IF NOT EXISTS replacing_userinfo;
+USE replacing_userinfo;
+ 
+-- Create the UserInfo table
+CREATE TABLE IF NOT EXISTS UserInfo (
+    Username STRING NOT NULL,
+    Email STRING NOT NULL,
+    DOB DATE NOT NULL,
+    City STRING,
+    ZipCode INT,
+    SSN BIGINT
+);
+ 
+-- Insert sample records
+INSERT INTO UserInfo (Username, Email, DOB, City, ZipCode, SSN)
+VALUES
+    ('John', 'john.a@gmail.com', '1990-05-15', 'New York', 10001 , 123456789),
+    ('Ram', 'ram.b@gmail.com', '1985-08-20', 'Los Angeles', 90001, 987654321),
+    ('Raju', 'raju.c@yahoo.com', '1995-03-10', 'Chicago', 60601, 123498765);
+ 
+-- Add ReplacedName column
+ALTER TABLE UserInfo ADD COLUMNS (ReplacedName STRING);
+ 
+-- Mask Username: first letter + Xs
+UPDATE UserInfo
+SET ReplacedName = CONCAT(SUBSTRING(Username, 1, 1), REPEAT('X', LENGTH(Username) - 1));
+ 
+-- Add ReplacedDOB column
+ALTER TABLE UserInfo ADD COLUMNS (ReplacedDOB DATE);
+ 
+-- Replace DOB with same year and Jan 1st
+UPDATE UserInfo
+SET ReplacedDOB = MAKE_DATE(YEAR(DOB), 1, 1);
+ 
+-- Add ReplacedEmail column
+ALTER TABLE UserInfo ADD COLUMNS (ReplacedEmail STRING);
+ 
+-- Mask Email username: keep first char, mask middle, keep domain
+UPDATE UserInfo
+SET ReplacedEmail =
+    CONCAT(
+        SUBSTRING(Email, 1, 1),
+        REPEAT('X', LENGTH(SPLIT(Email, '@')[0]) - 1),
+        '@',
+        SPLIT(Email, '@')[1]
+    );
+ 
+-- Add HashedSSN column
+ALTER TABLE UserInfo ADD COLUMNS (HashedSSN STRING);
+ 
+-- Hash SSN with SHA2
+UPDATE UserInfo
+SET HashedSSN = SHA2(CAST(SSN AS STRING), 256);
+ 
+-- Add ReplacedZip column
+ALTER TABLE UserInfo ADD COLUMNS (ReplacedZip INT);
+ 
+-- Mask ZipCode: keep first 3 digits, rest as 0
+UPDATE UserInfo
+SET ReplacedZip = CAST(CONCAT(SUBSTRING(CAST(ZipCode AS STRING), 1, 3), REPEAT('0', LENGTH(CAST(ZipCode AS STRING)) - 3)) AS INT);
+ 
+-- Reinsert same records to simulate incremental loads
+INSERT INTO UserInfo (Username, Email, DOB, City, ZipCode, SSN)
+VALUES
+    ('John', 'john.a@gmail.com', '1990-05-15', 'New York', 10001 , 123456789),
+    ('Ram', 'ram.b@gmail.com', '1985-08-20', 'Los Angeles', 90001, 987654321),
+    ('Raju', 'raju.c@yahoo.com', '1995-03-10', 'Chicago', 60601, 123498765);
+ 
+-- View all records
+SELECT * FROM UserInfo ORDER BY Username;
