@@ -1,0 +1,68 @@
+Enter file contents here%sql
+-- -- Create and switch to the database
+CREATE DATABASE vytalize_upd_new;
+ 
+USE vytalize_upd_new;
+ 
+ 
+-- Create the Info table
+CREATE TABLE Info (
+    Username STRING,
+    Email STRING,
+    DOB DATE,
+    City STRING,
+    ZipCode INT,
+    SSN STRING,
+    HashedUsername STRING,
+    HashedEmail STRING,
+    HashedDOB STRING,
+    HashedZip STRING,
+    HashedSSN STRING,
+    HashedDOBdec DECIMAL(38, 0)
+);
+ 
+-- Insert sample records
+INSERT INTO Info (Username, Email, DOB, City, ZipCode, SSN)
+VALUES
+    ('John', 'john.a@gmail.com', '1990-05-15', 'New York', 10001 , '123456789'),
+    ('Ram', 'ram.b@gmail.com', '1985-08-20', 'Los Angeles', 90001, '987654321'),
+    ('Raju', 'raju.c@yahoo.com', '1995-03-10', 'Chicago', 60601, '123498765');
+ 
+-- Hashing the email (only username part before @)
+UPDATE Info
+SET HashedEmail =
+    CONCAT(
+        SHA2(SPLIT(Email, '@')[0], 256),
+        '@',
+        SPLIT(Email, '@')[1]
+    );
+ 
+-- Hashing the username
+UPDATE Info
+SET HashedUsername = SHA2(Username, 256);
+ 
+-- Hashing the ZipCode
+UPDATE Info
+SET HashedZip = SHA2(CAST(ZipCode AS STRING), 256);
+ 
+-- Hashing the SSN
+UPDATE Info
+SET HashedSSN = SHA2(SSN, 256);
+ 
+-- Hashing the DOB as a string
+UPDATE Info
+SET HashedDOB = SHA2(DATE_FORMAT(DOB, 'yyyy-MM-dd'), 256);
+ 
+-- Hashing DOB into numeric-only (converted and trimmed to decimal)
+UPDATE Info
+SET HashedDOBdec = CAST(CONV(SUBSTRING(SHA2(DATE_FORMAT(DOB, 'yyyy-MM-dd'), 256), 1, 15), 16, 10) AS DECIMAL(38,0));
+ 
+-- Insert again to simulate incremental load
+INSERT INTO Info (Username, Email, DOB, City, ZipCode, SSN)
+VALUES
+    ('John', 'john.a@gmail.com', '1990-05-15', 'New York', 10001 , '123456789'),
+    ('Ram', 'ram.b@gmail.com', '1985-08-20', 'Los Angeles', 90001, '987654321'),
+    ('Raju', 'raju.c@yahoo.com', '1995-03-10', 'Chicago', 60601, '123498765');
+ 
+-- View data
+SELECT * FROM Info ORDER BY Username;
