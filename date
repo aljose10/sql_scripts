@@ -1,0 +1,56 @@
+SELECT
+  raw_date,
+  
+  -- yyyyMMdd
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{8}$'
+    THEN TRY_TO_DATE(raw_date, 'yyyyMMdd')
+    ELSE NULL
+  END AS as_yyyyMMdd,
+
+  -- MMddyyyy
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{8}$'
+    THEN TRY_TO_DATE(raw_date, 'MMddyyyy')
+    ELSE NULL
+  END AS as_MMddyyyy,
+
+  -- MM/dd/yyyy
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
+    THEN TRY_TO_DATE(raw_date, 'MM/dd/yyyy')
+    ELSE NULL
+  END AS as_MMddyyyy_slash,
+
+  -- M/d/yyyy
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{1}/[0-9]{1}/[0-9]{4}$'
+    THEN TRY_TO_DATE(raw_date, 'M/d/yyyy')
+    ELSE NULL
+  END AS as_Mdyyyy,
+
+  -- MM/d/yyyy
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{2}/[0-9]{1}/[0-9]{4}$'
+    THEN TRY_TO_DATE(raw_date, 'MM/d/yyyy')
+    ELSE NULL
+  END AS as_MMdyyyy,
+
+  -- M/dd/yyyy
+  CASE 
+    WHEN raw_date RLIKE '^[0-9]{1}/[0-9]{2}/[0-9]{4}$'
+    THEN TRY_TO_DATE(raw_date, 'M/dd/yyyy')
+    ELSE NULL
+  END AS as_Mddyyyy
+
+FROM (
+  SELECT explode(array(
+    '20240131',     -- valid yyyyMMdd
+    '01312024',     -- valid MMddyyyy
+    '04/28/2025',   -- valid MM/dd/yyyy
+    '4/8/2023',     -- valid M/d/yyyy
+    '00002010',     -- malformed yyyyMMdd (month = 00)
+    '13/32/2022',   -- invalid MM/dd/yyyy
+    ''              -- blank
+  )) AS raw_date
+) t;
