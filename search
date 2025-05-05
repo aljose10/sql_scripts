@@ -1,0 +1,24 @@
+{%- macro optional_string_to_date(column_name) -%}
+case
+    when {{ column_name }} = '' then null
+
+    -- yyyyMMdd (e.g., 20240131)
+    when {{ column_name }} rlike '^[0-9]{8}$' and substring({{ column_name }}, 1, 4) between '1900' and '2100'
+    then to_date({{ column_name }}, 'yyyyMMdd')
+
+    -- MMddyyyy (e.g., 02132011)
+    when {{ column_name }} rlike '^[0-9]{8}$' and substring({{ column_name }}, 5, 4) between '1900' and '2100'
+    then to_date({{ column_name }}, 'MMddyyyy')
+
+    -- M/d/yyyy
+    when {{ column_name }} rlike '^[0-9]{1}/[0-9]{1}/[0-9]{4}$' then to_date({{ column_name }}, 'M/d/yyyy')
+    -- MM/d/yyyy
+    when {{ column_name }} rlike '^[0-9]{2}/[0-9]{1}/[0-9]{4}$' then to_date({{ column_name }}, 'MM/d/yyyy')
+    -- M/dd/yyyy
+    when {{ column_name }} rlike '^[0-9]{1}/[0-9]{2}/[0-9]{4}$' then to_date({{ column_name }}, 'M/dd/yyyy')
+    -- MM/dd/yyyy
+    when {{ column_name }} rlike '^[0-9]{2}/[0-9]{2}/[0-9]{4}$' then to_date({{ column_name }}, 'MM/dd/yyyy')
+
+    else null
+end
+{%- endmacro -%}
