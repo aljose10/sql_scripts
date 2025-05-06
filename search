@@ -22,3 +22,21 @@ case
     else null
 end
 {%- endmacro -%}
+---
+SELECT death_date
+FROM your_table_name
+WHERE death_date RLIKE '^[0-9]{8}$'
+  AND NOT (
+    -- Valid yyyyMMdd (e.g., 20240131)
+    (
+      SUBSTRING(death_date, 1, 4) BETWEEN '1900' AND '2100' AND
+      SUBSTRING(death_date, 5, 2) BETWEEN '01' AND '12'
+    )
+    OR
+    -- Valid MMddyyyy (e.g., 02132011)
+    (
+      SUBSTRING(death_date, 5, 4) BETWEEN '1900' AND '2100' AND
+      SUBSTRING(death_date, 1, 2) BETWEEN '01' AND '12'
+    )
+  )
+
