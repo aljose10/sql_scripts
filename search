@@ -39,4 +39,22 @@ WHERE death_date RLIKE '^[0-9]{8}$'
       SUBSTRING(death_date, 1, 2) BETWEEN '01' AND '12'
     )
   )
-
+-----
+SELECT
+ death_date,
+ CASE
+   -- Valid yyyyMMdd format (e.g., 20240131)
+   WHEN LENGTH(death_date) = 8
+        AND SUBSTRING(death_date, 1, 4) BETWEEN '1900' AND '2024'
+        AND SUBSTRING(death_date, 5, 2) BETWEEN '01' AND '12'
+        AND SUBSTRING(death_date, 7, 2) BETWEEN '01' AND '31'
+   THEN TO_DATE(death_date, 'yyyyMMdd')
+   -- Optionally handle MMddyyyy (e.g., 02132011)
+   WHEN LENGTH(death_date) = 8
+        AND SUBSTRING(death_date, 1, 2) BETWEEN '01' AND '12'
+        AND SUBSTRING(death_date, 3, 2) BETWEEN '01' AND '31'
+        AND SUBSTRING(death_date, 5, 4) BETWEEN '1900' AND '2024'
+   THEN TO_DATE(death_date, 'MMddyyyy')
+   ELSE NULL -- Replace invalid formats with NULL
+ END AS clean_death_date
+FROM your_table;
