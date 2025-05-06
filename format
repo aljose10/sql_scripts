@@ -16,4 +16,47 @@ CASE
 
     ELSE NULL
 END AS death_date,
-ents here
+------------------------------------
+select 
+    cast(null as {{dbt.type_string()}}) as person_id,
+    cast(client_patient_id as {{dbt.type_string()}}) as patient_id,
+    cast(first_name as {{dbt.type_string()}}) as first_name,
+    cast(last_name as {{dbt.type_string()}}) as last_name,
+    cast(gender as {{dbt.type_string()}})  as sex,
+    cast(race  as {{dbt.type_string()}}) as race,
+    CASE WHEN LENGTH(TRIM(dob)) = 8 AND TRIM(dob) NOT LIKE '%-%' AND TRIM(dob) NOT LIKE '%/%' THEN to_date(TRIM(dob), 'yyyyMMdd') END as birth_date,
+
+    CASE 
+        WHEN death_date RLIKE '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'M/d/yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN date_format(try_to_timestamp(death_date, 'yyyy-MM-dd'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{2}-[0-9]{2}-[0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'dd-MM-yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{1}-[0-9]{1}-[0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'd-M-yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{2}/[0-9]{2}/[0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'dd/MM/yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{1}/[0-9]{1}/[0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'd/M/yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-1][0-9][0-3][0-9][0-9]{4}$' THEN date_format(try_to_timestamp(death_date, 'MMddyyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{8}$' AND substring(death_date, 1, 4) BETWEEN '1900' AND '2100' THEN date_format(try_to_timestamp(death_date, 'yyyyMMdd'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^0000[0-9]{4}$' THEN date_format(try_to_timestamp(concat('01/01/', RIGHT(death_date, 4)), 'MM/dd/yyyy'), 'yyyy-MM-dd')
+        WHEN death_date RLIKE '^[0-9]{2}/[0-9]{4}$' THEN date_format(try_to_timestamp(concat(death_date, '/01'), 'MM/yyyy/dd'), 'yyyy-MM-dd')
+        ELSE NULL
+    END as death_date,
+
+    cast(death_indication as {{dbt.type_string()}}) as death_flag,
+    cast(ssn as {{dbt.type_string()}}) as social_security_number,
+    cast(concat(address_line_1, ', ' ,address_line_2) as {{dbt.type_string()}}) as address,
+    cast(initcap(city) as {{dbt.type_string()}}) as city,
+    cast(state as {{dbt.type_string()}}) as state,
+    zip as zip_code, 
+    cast(null as {{dbt.type_string()}}) as county,
+    cast(null as {{dbt.type_string()}}) as latitude,  
+    cast(null as {{dbt.type_string()}}) as longitude,
+    cast(phone_number as {{dbt.type_string()}}) as phone,
+    cast('healthjump' as {{dbt.type_string()}}) as data_source,
+    cast(null as {{dbt.type_string()}}) AS file_name,
+    _run_time AS ingest_datetime
+
+FROM {{ source('healthjump', 'demographic') }}
+
+{% if is_incremental() %}
+    AND _run_time > (select coalesce(max(_run_time), '1900-01-01') from {{ this }})
+{% endif %}
+
