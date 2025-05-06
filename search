@@ -91,3 +91,10 @@ CASE
   ELSE NULL
 END AS death_date
 
+-----
+WHEN death_date RLIKE '^[0-9]{8}$'
+  AND SUBSTRING(death_date, 1, 4) BETWEEN '1900' AND '2100'
+  AND SUBSTRING(death_date, 5, 2) BETWEEN '01' AND '12'
+  AND SUBSTRING(death_date, 7, 2) BETWEEN '01' AND '31'
+  THEN to_date(death_date, 'yyyyMMdd')
+
