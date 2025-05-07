@@ -59,4 +59,5 @@ FROM {{ source('healthjump', 'demographic') }}
 {% if is_incremental() %}
     AND _run_time > (select coalesce(max(_run_time), '1900-01-01') from {{ this }})
 {% endif %}
-
+-------------------------------------------------------
+cast(concat(cast(client_id as string), '_', cast(client_patient_id as string)) as {{ dbt.type_string() }}) as patient_id
