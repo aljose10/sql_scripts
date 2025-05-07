@@ -61,3 +61,13 @@ FROM {{ source('healthjump', 'demographic') }}
 {% endif %}
 -------------------------------------------------------
 cast(concat(cast(client_id as string), '_', cast(client_patient_id as string)) as {{ dbt.type_string() }}) as patient_id
+--------------------------------------------------------
+CAST(
+  CASE 
+    WHEN TRIM(LOWER(address_line_1)) = TRIM(LOWER(address_line_2)) OR TRIM(address_line_2) IS NULL OR TRIM(address_line_2) = ''
+      THEN TRIM(address_line_1)
+    ELSE CONCAT(TRIM(address_line_1), ', ', TRIM(address_line_2))
+  END 
+  AS {{ dbt.type_string() }}
+) AS address
+
